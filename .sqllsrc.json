@@ -1,0 +1,9 @@
+{
+  "connections": [
+    {
+      "name": "Task-Manager",
+      "adapter": "sqlite3",
+      "filename": "./tasks.db"
+    }
+  ]
+}
