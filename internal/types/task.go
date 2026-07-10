@@ -19,9 +19,29 @@ type Task struct {
 }
 
 func (t *Task) ToDB() db.Task {
-	return db.Task{}
+	priority := string(t.Priority)
+	return db.Task{
+		ID:        t.ID,
+		Name:      t.Name,
+		Project:   t.Project,
+		Priority:  &priority,
+		Notes:     t.Notes,
+		DueDate:   t.DueDate,
+		CreatedAt: t.CreatedAt,
+		UpdatedAt: t.UpdatedAt,
+	}
 }
 
-func TaskFromDB(db.Task) (Task, error) {
-	return Task{}, nil
+func TaskFromDB(task db.Task) (*Task, error) {
+	return &Task{
+		ID:        task.ID,
+		Name:      task.Name,
+		Project:   task.Project,
+		Client:    task.Client,
+		Priority:  Priority(*task.Priority),
+		Notes:     task.Notes,
+		DueDate:   task.DueDate,
+		CreatedAt: task.CreatedAt,
+		UpdatedAt: task.UpdatedAt,
+	}, nil
 }

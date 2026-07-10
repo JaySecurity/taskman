@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/kelseyhightower/envconfig"
@@ -18,6 +17,5 @@ func Init() *Config {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Config Parsed")
 	return &c
 }

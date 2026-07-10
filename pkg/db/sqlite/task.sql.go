@@ -47,6 +47,17 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	return i, err
 }
 
+const deleteTask = `-- name: DeleteTask :exec
+DELETE FROM tasks
+WHERE
+  id = ?
+`
+
+func (q *Queries) DeleteTask(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteTask, id)
+	return err
+}
+
 const getAllTasks = `-- name: GetAllTasks :many
 SELECT
   id, name, project, client, priority, notes, due_date, created_at, updated_at
@@ -101,6 +112,52 @@ LIMIT 1
 
 func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
 	row := q.db.QueryRowContext(ctx, getTask, id)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Project,
+		&i.Client,
+		&i.Priority,
+		&i.Notes,
+		&i.DueDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const modifyTask = `-- name: ModifyTask :one
+UPDATE tasks
+SET
+  "name" = ?,
+  "project" = ?,
+  "client" = ?,
+  "priority" = ?,
+  "due_date" = ?
+WHERE
+  id = ?
+RETURNING id, name, project, client, priority, notes, due_date, created_at, updated_at
+`
+
+type ModifyTaskParams struct {
+	Name     string     `json:"name"`
+	Project  *string    `json:"project"`
+	Client   *string    `json:"client"`
+	Priority *string    `json:"priority"`
+	DueDate  *time.Time `json:"due_date"`
+	ID       int64      `json:"id"`
+}
+
+func (q *Queries) ModifyTask(ctx context.Context, arg ModifyTaskParams) (Task, error) {
+	row := q.db.QueryRowContext(ctx, modifyTask,
+		arg.Name,
+		arg.Project,
+		arg.Client,
+		arg.Priority,
+		arg.DueDate,
+		arg.ID,
+	)
 	var i Task
 	err := row.Scan(
 		&i.ID,

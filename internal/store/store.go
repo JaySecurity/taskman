@@ -3,20 +3,21 @@ package store
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 
 	_ "github.com/mattn/go-sqlite3"
 
 	"taskman/internal/config"
 	"taskman/internal/types"
+	db "taskman/pkg/db/sqlite"
 )
 
 type TaskStoreInterface interface {
-	AddTask(ctx context.Context, task types.Task) error
-	ModifyTask(ctx context.Context, task types.Task) error
-	RemoveTask(ctx context.Context, taskId int64) error
+	AddTask(task types.Task) (*types.Task, error)
+	ModifyTask(task db.Task) (*types.Task, error)
+	RemoveTask(taskId int64) error
 	GetAllTasks() ([]types.Task, error)
+	GetTask(taskId int64) (*types.Task, error)
 }
 
 type SessionStoreInterface interface {
@@ -39,8 +40,6 @@ func NewStore(ctx *context.Context, cfg *config.Config) *Store {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Database Connected")
-	// db.Conn(context.Background())
 
 	taskStore := NewTaskStore(ctx, dbase)
 

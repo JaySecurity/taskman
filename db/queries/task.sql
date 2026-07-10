@@ -19,3 +19,21 @@ ORDER BY
 INSERT INTO tasks ("name", "project", "client", "priority", "due_date" )
 VALUES(?,?,?,?,?)
 RETURNING *;
+
+
+-- name: ModifyTask :one
+UPDATE tasks
+SET
+  "name" = ?,
+  "project" = ?,
+  "client" = ?,
+  "priority" = ?,
+  "due_date" = ?
+WHERE
+  id = ?
+RETURNING *;
+
+-- name: DeleteTask :exec
+DELETE FROM tasks
+WHERE
+  id = ?;
