@@ -1,0 +1,5 @@
+lowercaseKeywords: false
+connections:
+  - alias: taskman
+    driver: sqlite3
+    dataSource: tasks.db

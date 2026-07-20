@@ -9,22 +9,54 @@ import (
 	"context"
 )
 
-const addProject = `-- name: AddProject :exec
-INSERT OR IGNORE INTO projects (name) VALUES (?)
+const addProject = `-- name: AddProject :one
+INSERT OR IGNORE INTO projects (name) VALUES (?) RETURNING name, rate
 `
 
-func (q *Queries) AddProject(ctx context.Context, name *string) error {
-	_, err := q.db.ExecContext(ctx, addProject, name)
+func (q *Queries) AddProject(ctx context.Context, name *string) (Project, error) {
+	row := q.db.QueryRowContext(ctx, addProject, name)
+	var i Project
+	err := row.Scan(&i.Name, &i.Rate)
+	return i, err
+}
+
+const deleteProject = `-- name: DeleteProject :exec
+DELETE FROM projects WHERE name = ?
+`
+
+func (q *Queries) DeleteProject(ctx context.Context, name *string) error {
+	_, err := q.db.ExecContext(ctx, deleteProject, name)
 	return err
 }
 
 const getProject = `-- name: GetProject :one
-SELECT name FROM projects WHERE name = ?
+SELECT name, rate FROM projects WHERE name = ?
 `
 
-func (q *Queries) GetProject(ctx context.Context, name *string) (*string, error) {
+func (q *Queries) GetProject(ctx context.Context, name *string) (Project, error) {
 	row := q.db.QueryRowContext(ctx, getProject, name)
-	var name_2 *string
-	err := row.Scan(&name_2)
-	return name_2, err
+	var i Project
+	err := row.Scan(&i.Name, &i.Rate)
+	return i, err
+}
+
+const modifyProject = `-- name: ModifyProject :one
+UPDATE projects
+SET rate = COALESCE(?1, rate),
+    name = ?2
+WHERE name = ?3
+RETURNING name, rate
+`
+
+type ModifyProjectParams struct {
+	Rate    *float64 `json:"rate"`
+	NewName *string  `json:"new_name"`
+	Name    *string  `json:"name"`
+}
+
+func (q *Queries) ModifyProject(ctx context.Context, arg ModifyProjectParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, modifyProject, arg.Rate, arg.NewName, arg.Name)
+	var i Project
+	err := row.Scan(&i.Name, &i.Rate)
+	return i, err
 }

@@ -10,12 +10,40 @@ import (
 )
 
 type TaskStore struct {
-	ctx      *context.Context
+	ctx      context.Context
 	database *sql.DB
 	queries  *db.Queries
 }
 
-func NewTaskStore(ctx *context.Context, database *sql.DB) *TaskStore {
+func TaskToSQLite(t types.Task) db.Task {
+	priority := string(t.Priority)
+	return db.Task{
+		ID:        t.ID,
+		Name:      t.Name,
+		Project:   t.Project,
+		Priority:  &priority,
+		Notes:     t.Notes,
+		DueDate:   t.DueDate,
+		CreatedAt: t.CreatedAt,
+		UpdatedAt: t.UpdatedAt,
+	}
+}
+
+func TaskFromSQLite(task db.Task) (*types.Task, error) {
+	return &types.Task{
+		ID:        task.ID,
+		Name:      task.Name,
+		Project:   task.Project,
+		Client:    task.Client,
+		Priority:  types.Priority(*task.Priority),
+		Notes:     task.Notes,
+		DueDate:   task.DueDate,
+		CreatedAt: task.CreatedAt,
+		UpdatedAt: task.UpdatedAt,
+	}, nil
+}
+
+func NewTaskStore(ctx context.Context, database *sql.DB) *TaskStore {
 	queries := db.New(database)
 	return &TaskStore{
 		ctx:      ctx,
@@ -25,12 +53,12 @@ func NewTaskStore(ctx *context.Context, database *sql.DB) *TaskStore {
 }
 
 func (s *TaskStore) AddTask(task types.Task) (*types.Task, error) {
-	err := s.queries.AddProject(*s.ctx, task.Project)
+	_, err := s.queries.AddProject(s.ctx, task.Project)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
 	priority := string(task.Priority)
-	data, err := s.queries.CreateTask(*s.ctx, db.CreateTaskParams{
+	data, err := s.queries.CreateTask(s.ctx, db.CreateTaskParams{
 		Name:     task.Name,
 		Project:  task.Project,
 		Priority: &priority,
@@ -38,7 +66,7 @@ func (s *TaskStore) AddTask(task types.Task) (*types.Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	newtask, err := types.TaskFromDB(data)
+	newtask, err := TaskFromSQLite(data)
 	if err != nil {
 		return nil, err
 	}
@@ -54,11 +82,11 @@ func (s *TaskStore) ModifyTask(task db.Task) (*types.Task, error) {
 		Priority: task.Priority,
 		DueDate:  task.DueDate,
 	}
-	updatedTask, err := s.queries.ModifyTask(*s.ctx, params)
+	updatedTask, err := s.queries.ModifyTask(s.ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	result, err := types.TaskFromDB(updatedTask)
+	result, err := TaskFromSQLite(updatedTask)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +94,7 @@ func (s *TaskStore) ModifyTask(task db.Task) (*types.Task, error) {
 }
 
 func (s *TaskStore) RemoveTask(taskId int64) error {
-	err := s.queries.DeleteTask(*s.ctx, taskId)
+	err := s.queries.DeleteTask(s.ctx, taskId)
 	if err != nil {
 		return err
 	}
@@ -74,14 +102,14 @@ func (s *TaskStore) RemoveTask(taskId int64) error {
 }
 
 func (s *TaskStore) GetAllTasks() ([]types.Task, error) {
-	tasks, err := s.queries.GetAllTasks(*s.ctx)
+	tasks, err := s.queries.GetAllTasks(s.ctx)
 	if err != nil {
 		fmt.Printf("Error fetching tasks: %v", err)
 		return nil, err
 	}
 	var result []types.Task
 	for _, task := range tasks {
-		t, err := types.TaskFromDB(task)
+		t, err := TaskFromSQLite(task)
 		if err != nil {
 			return nil, err
 		}
@@ -91,11 +119,11 @@ func (s *TaskStore) GetAllTasks() ([]types.Task, error) {
 }
 
 func (s *TaskStore) GetTask(taskId int64) (*types.Task, error) {
-	task, err := s.queries.GetTask(*s.ctx, taskId)
+	task, err := s.queries.GetTask(s.ctx, taskId)
 	if err != nil {
 		return nil, err
 	}
-	result, err := types.TaskFromDB(task)
+	result, err := TaskFromSQLite(task)
 	if err != nil {
 		return nil, err
 	}

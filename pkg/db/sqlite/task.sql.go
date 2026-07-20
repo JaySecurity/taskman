@@ -13,7 +13,7 @@ import (
 const createTask = `-- name: CreateTask :one
 INSERT INTO tasks ("name", "project", "client", "priority", "due_date" )
 VALUES(?,?,?,?,?)
-RETURNING id, name, project, client, priority, notes, due_date, created_at, updated_at
+RETURNING id, name, project, client, priority, status, notes, due_date, current_session, created_at, updated_at, "foreign"
 `
 
 type CreateTaskParams struct {
@@ -39,10 +39,13 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.Project,
 		&i.Client,
 		&i.Priority,
+		&i.Status,
 		&i.Notes,
 		&i.DueDate,
+		&i.CurrentSession,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Foreign,
 	)
 	return i, err
 }
@@ -60,7 +63,7 @@ func (q *Queries) DeleteTask(ctx context.Context, id int64) error {
 
 const getAllTasks = `-- name: GetAllTasks :many
 SELECT
-  id, name, project, client, priority, notes, due_date, created_at, updated_at
+  id, name, project, client, priority, status, notes, due_date, current_session, created_at, updated_at, "foreign"
 FROM
   tasks
 ORDER BY
@@ -82,10 +85,13 @@ func (q *Queries) GetAllTasks(ctx context.Context) ([]Task, error) {
 			&i.Project,
 			&i.Client,
 			&i.Priority,
+			&i.Status,
 			&i.Notes,
 			&i.DueDate,
+			&i.CurrentSession,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Foreign,
 		); err != nil {
 			return nil, err
 		}
@@ -102,7 +108,7 @@ func (q *Queries) GetAllTasks(ctx context.Context) ([]Task, error) {
 
 const getTask = `-- name: GetTask :one
 SELECT
-  id, name, project, client, priority, notes, due_date, created_at, updated_at
+  id, name, project, client, priority, status, notes, due_date, current_session, created_at, updated_at, "foreign"
 FROM
   tasks
 WHERE
@@ -119,10 +125,13 @@ func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
 		&i.Project,
 		&i.Client,
 		&i.Priority,
+		&i.Status,
 		&i.Notes,
 		&i.DueDate,
+		&i.CurrentSession,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Foreign,
 	)
 	return i, err
 }
@@ -130,23 +139,25 @@ func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
 const modifyTask = `-- name: ModifyTask :one
 UPDATE tasks
 SET
-  "name" = ?,
-  "project" = ?,
-  "client" = ?,
-  "priority" = ?,
-  "due_date" = ?
+  "name" = COALESCE(?, "name"), 
+  "project" = COALESCE(?, "project"),
+  "client" = COALESCE(?, "client"),
+  "priority" = COALESCE(?, "priority"),
+  "due_date" = COALESCE(?, "due_date"),
+  "current_session" = COALESCE(?, "current_session")
 WHERE
   id = ?
-RETURNING id, name, project, client, priority, notes, due_date, created_at, updated_at
+RETURNING id, name, project, client, priority, status, notes, due_date, current_session, created_at, updated_at, "foreign"
 `
 
 type ModifyTaskParams struct {
-	Name     string     `json:"name"`
-	Project  *string    `json:"project"`
-	Client   *string    `json:"client"`
-	Priority *string    `json:"priority"`
-	DueDate  *time.Time `json:"due_date"`
-	ID       int64      `json:"id"`
+	Name           string     `json:"name"`
+	Project        *string    `json:"project"`
+	Client         *string    `json:"client"`
+	Priority       *string    `json:"priority"`
+	DueDate        *time.Time `json:"due_date"`
+	CurrentSession *int64     `json:"current_session"`
+	ID             int64      `json:"id"`
 }
 
 func (q *Queries) ModifyTask(ctx context.Context, arg ModifyTaskParams) (Task, error) {
@@ -156,6 +167,7 @@ func (q *Queries) ModifyTask(ctx context.Context, arg ModifyTaskParams) (Task, e
 		arg.Client,
 		arg.Priority,
 		arg.DueDate,
+		arg.CurrentSession,
 		arg.ID,
 	)
 	var i Task
@@ -165,10 +177,13 @@ func (q *Queries) ModifyTask(ctx context.Context, arg ModifyTaskParams) (Task, e
 		&i.Project,
 		&i.Client,
 		&i.Priority,
+		&i.Status,
 		&i.Notes,
 		&i.DueDate,
+		&i.CurrentSession,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Foreign,
 	)
 	return i, err
 }

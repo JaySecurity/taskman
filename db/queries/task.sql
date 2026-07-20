@@ -6,6 +6,8 @@ FROM
 WHERE
   id = ?
 LIMIT 1;
+
+
 -- name: GetAllTasks :many
 SELECT
   *
@@ -24,11 +26,12 @@ RETURNING *;
 -- name: ModifyTask :one
 UPDATE tasks
 SET
-  "name" = ?,
-  "project" = ?,
-  "client" = ?,
-  "priority" = ?,
-  "due_date" = ?
+  "name" = COALESCE(?, "name"), 
+  "project" = COALESCE(?, "project"),
+  "client" = COALESCE(?, "client"),
+  "priority" = COALESCE(?, "priority"),
+  "due_date" = COALESCE(?, "due_date"),
+  "current_session" = COALESCE(?, "current_session")
 WHERE
   id = ?
 RETURNING *;

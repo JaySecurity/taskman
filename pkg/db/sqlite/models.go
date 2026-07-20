@@ -21,13 +21,16 @@ type Session struct {
 }
 
 type Task struct {
-	ID        int64      `json:"id"`
-	Name      string     `json:"name"`
-	Project   *string    `json:"project"`
-	Client    *string    `json:"client"`
-	Priority  *string    `json:"priority"`
-	Notes     *string    `json:"notes"`
-	DueDate   *time.Time `json:"due_date"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
+	ID             int64       `json:"id"`
+	Name           string      `json:"name"`
+	Project        *string     `json:"project"`
+	Client         *string     `json:"client"`
+	Priority       *string     `json:"priority"`
+	Status         *string     `json:"status"`
+	Notes          *string     `json:"notes"`
+	DueDate        *time.Time  `json:"due_date"`
+	CurrentSession *int64      `json:"current_session"`
+	CreatedAt      *time.Time  `json:"created_at"`
+	UpdatedAt      *time.Time  `json:"updated_at"`
+	Foreign        interface{} `json:"foreign"`
 }
